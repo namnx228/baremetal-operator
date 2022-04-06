@@ -28,7 +28,7 @@ jobs:
         id: list_yaml
         # run: echo '::set-output name=value::$(find . -type f -name "*.yaml")'
         run: |
-          LIST_YAML="$(find . -type f -name '*.yaml' -exec readlink -f {} \;)"
+          LIST_YAML="$(find . -type f -name '*.yaml')"
           echo "::set-output name=value::$(IFS=$','; echo $LIST_YAML | jq -cnR '[inputs | select(length>0)]')"
           # echo "::set-output name=value::\"$LIST_YAML\""
           # echo $LIST_YAML

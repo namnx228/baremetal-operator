@@ -63,7 +63,7 @@ jobs:
           format: template
           template: template/sarif.tpl
           # output: ${{ matrix.value }}.sarif
-          output: kubesec.sarif
+          output: /tmp/kubesec.sarif
           exit-code: "0"
 
       - name: Print out the output
@@ -75,4 +75,4 @@ jobs:
         if: ${{ !env.ACT }}
         with:
           # sarif_file: ${{ matrix.value }}.sarif
-          sarif_file: kubesec.sarif
+          sarif_file: /tmp/kubesec.sarif

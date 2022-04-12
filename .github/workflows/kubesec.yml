@@ -6,13 +6,10 @@
 name: Kubesec
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    # The branches below must be a subset of the branches above
+  push: 
     branches: [ main ]
   schedule:
-    - cron: '36 8 * * 3'
+    - cron: '22 8 * * 4'
 
 jobs:
   setup:
@@ -26,13 +23,9 @@ jobs:
 
       - name: Collect all yaml
         id: list_yaml
-        # run: echo '::set-output name=value::$(find . -type f -name "*.yaml")'
         run: |
           LIST_YAML="$(find * -type f -name '*.yaml')"
           echo "::set-output name=value::$(IFS=$','; echo $LIST_YAML | jq -cnR '[inputs | select(length>0)]')"
-          # echo "::set-output name=value::\"$LIST_YAML\""
-          # echo $LIST_YAML
-
     outputs:
       matrix: ${{ steps.list_yaml.outputs.value }}
 
@@ -45,13 +38,8 @@ jobs:
       contents: read
       security-events: write
     strategy: 
-      # matrix: ${{ fromJson(needs.setup.outputs.matrix) }}
       matrix: 
-        # value: ["all.yml", "all4.yml"]
-        # value: ${{ needs.setup.outputs.matrix }} 
         value: ${{ fromJson(needs.setup.outputs.matrix) }}
-        # value: ${{ needs.setup.outputs.matrix }}
-        # value: ${{ env.LIST_YAML }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -60,32 +48,17 @@ jobs:
         uses: controlplaneio/kubesec-action@43d0ddff5ffee89a6bb9f29b64cd865411137b14
         with:
           input: ${{ matrix.value }}
-          # input: all.yaml
           format: template
           template: template/sarif.tpl
           output: ${{ matrix.value }}.sarif
-          # output: /tmp/kubesec.sarif
           exit-code: "0"
 
       - name: Save result into a variable
         id: save_result
-        # run: echo "::set-output name=result::$(cat kubesec.sarif | jq -c '.runs')"
         run: echo "::set-output name=result::$(cat ${{ matrix.value }}.sarif | jq -c '.runs')"
-      # - name: test code
-      #   if: ${{ steps.test.outputs.content == '[]' }}
-      #   run: echo Hello Debugger
-      # - name: Test NAMMM
-      #   run: echo NAMMM "${{ steps.save_result.outputs.result }}"
-
-      - name: Print out the output
-        if: ${{ env.ACT }}
-        run: cat ${{ matrix.value }}.sarif
-        # run: cat /tmp/kubesec.sarif
-        #
 
       - name: Upload Kubesec scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v1
         if: ${{ steps.save_result.outputs.result != '[]' }}
+        uses: github/codeql-action/upload-sarif@v1
         with:
           sarif_file: ${{ matrix.value }}.sarif
-          # sarif_file: kubesec.sarif
